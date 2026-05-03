@@ -1,0 +1,42 @@
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from app.models import Base
+from app.database import get_db
+from app.main import app
+
+TEST_DATABASE_URL = "sqlite:///./test_hearthstone.db"
+test_engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+
+def override_get_db():
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# Override DB dependency for testing
+app.dependency_overrides[get_db] = override_get_db
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_test_db():
+    # Create tables before tests, drop them after
+    Base.metadata.create_all(bind=test_engine)
+    yield
+    Base.metadata.drop_all(bind=test_engine)
+
+client = TestClient(app)
+
+def test_full_workflow():
+    """
+    Test user creation and authorization
+    """
+    resp = client.post("/auth/register", json={"username": "testplayer", "password": "strongpass123"})
+    assert resp.status_code == 201
+    
+    resp = client.post("/auth/login", data={"username": "testplayer", "password": "strongpass123"})
+    assert resp.status_code == 200
+    token = resp.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
