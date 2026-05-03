@@ -31,10 +31,10 @@ client = TestClient(app)
 
 def test_full_workflow():
     """Test user creation and authorization"""
-    resp = client.post("/auth/register", json={"username": "testplayer", "password": "strongpass123"})
+    resp = client.post("/auth/register", json={"username": "testplayer", "password": "Strongpass123!"})
     assert resp.status_code == 201
     
-    resp = client.post("/auth/login", data={"username": "testplayer", "password": "strongpass123"})
+    resp = client.post("/auth/login", data={"username": "testplayer", "password": "Strongpass123!"})
     assert resp.status_code == 200
     token = resp.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
@@ -82,5 +82,6 @@ def test_full_workflow():
     """Test deck validation"""
     bad_deck_cards = [{"card_id": i + 1, "quantity": 2} for i in range(10)]
     resp = client.post("/decks/", json={"name": "Bad Deck", "cards": bad_deck_cards}, headers=headers)
-    assert resp.status_code == 400
-    assert "exactly 30 cards" in resp.json()["detail"].lower()
+    print(resp.json())
+    assert resp.status_code == 422
+    assert "exactly 30 cards" in resp.json()["detail"][0]["msg"].lower()
