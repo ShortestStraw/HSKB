@@ -1,0 +1,22 @@
+[MAIN]
+py-version = 3.10
+fail-under = 8.0
+
+[MESSAGES CONTROL]
+disable=
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    too-few-public-methods,
+    too-many-locals,
+    unused-argument,
+    redefined-outer-name,
+    import-outside-toplevel
+
+[FORMAT]
+max-line-length = 100
+
+[DESIGN]
+max-locals = 20
+max-args = 10
+max-branches = 15
