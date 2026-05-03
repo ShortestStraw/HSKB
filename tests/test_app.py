@@ -64,3 +64,23 @@ def test_full_workflow():
     """Recreate card, as it will be used further in tests"""
     client.post("/cards/me", json={"name": "TestCard_0", "mana_cost": 0, "rarity": "common"}, headers=headers)
     client.post("/cards/me", json={"name": "TestCard_0", "mana_cost": 0, "rarity": "common"}, headers=headers)
+
+    """Test Create deck """
+    deck_cards = [{"card_id": i + 1, "quantity": 2} for i in range(15)]
+    resp = client.post("/decks/", json={"name": "Budget Mage", "description": "Auto-gen test deck", "cards": deck_cards}, headers=headers)
+    assert resp.status_code == 201
+    deck_id = resp.json()["id"]
+
+    """Test recommendation endpoint"""
+    resp = client.get("/decks/recommend", headers=headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["deck_id"] == deck_id
+    assert data["match_percentage"] == 100.0
+    assert data["missing_cards"] == []
+
+    """Test deck validation"""
+    bad_deck_cards = [{"card_id": i + 1, "quantity": 2} for i in range(10)]
+    resp = client.post("/decks/", json={"name": "Bad Deck", "cards": bad_deck_cards}, headers=headers)
+    assert resp.status_code == 400
+    assert "exactly 30 cards" in resp.json()["detail"].lower()
