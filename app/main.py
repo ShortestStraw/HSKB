@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from app.database import engine
 from app.models import Base
 from app.router_auth import router as auth_router
+from app.router_cards import router as cards_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -13,6 +14,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Hearthstone Deck Knowledge Base", version="1.0.0", lifespan=lifespan)
 
 app.include_router(auth_router)
+app.include_router(cards_router)
 
 @app.get("/")
 def read_root():

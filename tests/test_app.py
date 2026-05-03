@@ -30,9 +30,7 @@ def setup_test_db():
 client = TestClient(app)
 
 def test_full_workflow():
-    """
-    Test user creation and authorization
-    """
+    """Test user creation and authorization"""
     resp = client.post("/auth/register", json={"username": "testplayer", "password": "strongpass123"})
     assert resp.status_code == 201
     
@@ -40,3 +38,29 @@ def test_full_workflow():
     assert resp.status_code == 200
     token = resp.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
+
+    """Test card creation"""
+    for i in range(15):
+        client.post("/cards/me", json={"name": f"TestCard_{i}", "mana_cost": i % 8, "rarity": "common"}, headers=headers)
+        client.post("/cards/me", json={"name": f"TestCard_{i}", "mana_cost": i % 8, "rarity": "common"}, headers=headers)
+
+    resp = client.get("/cards/me", headers=headers)
+    assert resp.status_code == 200
+    assert len(resp.json()) == 15
+
+    """Test card deletion"""
+    resp = client.delete("/cards/me/1", headers=headers)
+    assert resp.status_code == 200
+    assert resp.json()["new_quantity"] == 1
+
+    resp = client.delete("/cards/me/1", headers=headers)
+    assert resp.status_code == 200
+    assert resp.json()["new_quantity"] == 0
+
+    """Delete existing card"""
+    resp = client.delete("/cards/me/1", headers=headers)
+    assert resp.status_code == 404
+
+    """Recreate card, as it will be used further in tests"""
+    client.post("/cards/me", json={"name": "TestCard_0", "mana_cost": 0, "rarity": "common"}, headers=headers)
+    client.post("/cards/me", json={"name": "TestCard_0", "mana_cost": 0, "rarity": "common"}, headers=headers)
